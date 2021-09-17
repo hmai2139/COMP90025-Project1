@@ -10,5 +10,6 @@ using namespace std;
 
 int main()
 {
+	SHA512_HH;
 	return 0;
 }
