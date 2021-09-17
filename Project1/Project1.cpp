@@ -2,11 +2,13 @@
 //
 
 #include "Project1.h"
+#include <omp.h>
+#include <stdio.h>
+#include "sha512.hh";
 
 using namespace std;
 
 int main()
 {
-	cout << "Hello CMake." << endl;
 	return 0;
 }
