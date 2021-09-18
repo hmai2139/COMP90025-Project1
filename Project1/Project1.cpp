@@ -109,7 +109,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 // `k` here should replaced with the sum  of `i` + num of assigned sequences.
 // since doing a parallelisation here is incorrect, k should be pre-calculated and passed as an input to this function.
 
-	#pragma omp parallel shared(alignmentHash)
+	#pragma omp parallel
 	{
 		std::string threadHash = "";
 		

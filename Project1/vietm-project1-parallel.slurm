@@ -10,6 +10,5 @@
 #SBATCH --job-name=parallel
 
 module load gcc/8.3.0
-cd project1
 g++ -fopenmp -Wall -O3 -o project1 project1.cpp
 ./project1 < mseq-big13-example.dat

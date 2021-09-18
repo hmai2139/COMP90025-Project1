@@ -3,6 +3,8 @@
 
 #pragma once
 
-#include <iostream>
-
-// TODO: Reference additional headers your program requires here.
+#include <sys/time.h>
+#include <string>
+#include <cstring>
+#include "sha512.hh"
+#include <omp.h>
