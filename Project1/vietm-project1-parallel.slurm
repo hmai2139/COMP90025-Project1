@@ -11,4 +11,4 @@
 
 module load gcc/8.3.0
 g++ -fopenmp -Wall -O3 -o project1 project1.cpp
-./kseqalign < mseq-big13-example.dat
+./project1 < mseq-big13-example.dat
