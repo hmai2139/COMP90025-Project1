@@ -6,6 +6,7 @@
 #include <iostream>
 #include "sha512.hh"
 #include <omp.h>
+#include <numa.h>
 
 using namespace std;
 
