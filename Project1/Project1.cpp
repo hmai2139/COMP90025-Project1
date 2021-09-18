@@ -164,11 +164,11 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				#pragma omp ordered
 				alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
 
-				// Uncomment for testing purposes
-				std::cout << penalties[probNum] << std::endl;
-				std::cout << align1 << std::endl;
-				std::cout << align2 << std::endl;
-				std::cout << std::endl;
+				//// Uncomment for testing purposes
+				//std::cout << penalties[probNum] << std::endl;
+				//std::cout << align1 << std::endl;
+				//std::cout << align2 << std::endl;
+				//std::cout << std::endl;
 
                 #pragma omp ordered
 				probNum++;
