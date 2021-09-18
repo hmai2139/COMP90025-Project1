@@ -6,7 +6,6 @@
 #include <iostream>
 #include "sha512.hh"
 #include <omp.h>
-#include <vector>
 
 using namespace std;
 
