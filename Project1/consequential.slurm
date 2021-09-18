@@ -9,7 +9,6 @@
 #SBATCH --mem=32G
 #SBATCH --job-name=default-sequential
 
-module load gcc/11.2.0
-
+module load gcc/8.3.0
 g++ -fopenmp -Wall -O3 -o kseqalign kseqalign.cpp
 ./kseqalign < mseq-big13-example.dat
