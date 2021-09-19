@@ -186,19 +186,16 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 	memset(dp[0], 0, size);
 
 	// intialising the table
-	#pragma omp parallel for
 	for (i = 0; i <= m; i++)
 	{
 		dp[i][0] = i * pgap;
 	}
-	#pragma omp parallel for
 	for (i = 0; i <= n; i++)
 	{
 		dp[0][i] = i * pgap;
 	}
 
 	// calcuting the minimum penalty
-	#pragma omp parallel for collapse(2)
 	for (i = 1; i <= m; i++)
 	{
 		for (j = 1; j <= n; j++)
@@ -224,6 +221,7 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 	int xpos = l;
 	int ypos = l;
 
+	#pragma omp parallel 
 	while (!(i == 0 || j == 0))
 	{
 		if (x[i - 1] == y[j - 1])
@@ -251,11 +249,13 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 			j--;
 		}
 	}
+	#pragma omp parallel 
 	while (xpos > 0)
 	{
 		if (i > 0) xans[xpos--] = (int)x[--i];
 		else xans[xpos--] = (int)'_';
 	}
+	#pragma omp parallel 
 	while (ypos > 0)
 	{
 		if (j > 0) yans[ypos--] = (int)y[--j];
