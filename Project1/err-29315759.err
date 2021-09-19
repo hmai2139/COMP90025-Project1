@@ -1,0 +1,4 @@
+/var/spool/slurm/job29315759/slurm_script: line 18: OMP_NUM_THREADS: command not found
+/var/spool/slurm/job29315759/slurm_script: line 21: OMP_NUM_THREADS: command not found
+/var/spool/slurm/job29315759/slurm_script: line 24: OMP_NUM_THREADS: command not found
+/var/spool/slurm/job29315759/slurm_script: line 27: OMP_NUM_THREADS: command not found

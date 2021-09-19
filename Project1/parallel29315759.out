@@ -1,0 +1,8 @@
+OMP_PROC_BIND=close
+
+- e 1 thread(s)\n
+- e 2 thread(s)\n
+- e 4 thread(s)\n
+- e 8 thread(s)\n
+---------------------
+
