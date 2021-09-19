@@ -11,4 +11,6 @@
 
 module load gcc/8.3.0
 g++ -fopenmp -lnuma -Wall -O3 -o Project1 Project1.cpp
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
 cat mseq-big13-example.dat | ./Project1
