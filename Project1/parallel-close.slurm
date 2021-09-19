@@ -10,7 +10,7 @@
 #SBATCH --job-name=parallel
 
 module load gcc/8.3.0
-g++ -fopenmp -Wall -O3 -o Project1 Project1.cpp
+g++ -fopenmp -lnuma -Wall -O3 -o Project1 Project1.cpp
 
 echo -e "OMP_PROC_BIND=close\n"
 
