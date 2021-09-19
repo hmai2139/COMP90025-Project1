@@ -14,48 +14,48 @@ g++ -fopenmp -Wall -O3 -o Project1 Project1.cpp
 
 echo -e "OMP_PROC_BIND=master\n"
 
-echo - e "1 thread\n"
+echo - e "1 thread(s)\n"
 OMP_PROC_BIND=master OMP_NUM_THREADS = 1 ./Project1 < mseq-big13-example.dat
 
-echo - e "2 thread\n"
+echo - e "2 thread(s)\n"
 OMP_PROC_BIND=master OMP_NUM_THREADS = 2 ./Project1 < mseq-big13-example.dat
 
-echo - e "4 thread\n"
+echo - e "4 thread(s)\n"
 OMP_PROC_BIND=master OMP_NUM_THREADS = 4 ./Project1 < mseq-big13-example.dat
 
-echo - e "8 thread\n"
+echo - e "8 thread(s)\n"
 OMP_PROC_BIND=master OMP_NUM_THREADS = 8 ./Project1 < mseq-big13-example.dat
 
 echo -e "---------------------\n"
 
 echo -e "OMP_PROC_BIND=spread\n"
 
-echo - e "1 thread\n"
+echo - e "1 thread(s)\n"
 OMP_PROC_BIND=spread OMP_NUM_THREADS = 1 ./Project1 < mseq-big13-example.dat
 
-echo - e "2 thread\n"
+echo - e "2 thread(s)\n"
 OMP_PROC_BIND=spread OMP_NUM_THREADS = 2 ./Project1 < mseq-big13-example.dat
 
-echo - e "4 thread\n"
+echo - e "4 thread(s)\n"
 OMP_PROC_BIND=spread OMP_NUM_THREADS = 4 ./Project1 < mseq-big13-example.dat
 
-echo - e "8 thread\n"
+echo - e "8 thread(s)\n"
 OMP_PROC_BIND=spread OMP_NUM_THREADS = 8 ./Project1 < mseq-big13-example.dat
 
 echo -e "---------------------\n"
 
 echo -e "OMP_PROC_BIND=close\n"
 
-echo - e "1 thread\n"
+echo - e "1 thread(s)\n"
 OMP_PROC_BIND=close OMP_NUM_THREADS = 1 ./Project1 < mseq-big13-example.dat
 
-echo - e "2 thread\n"
+echo - e "2 thread(s)\n"
 OMP_PROC_BIND=close OMP_NUM_THREADS = 2 ./Project1 < mseq-big13-example.dat
 
-echo - e "4 thread\n"
+echo - e "4 thread(s)\n"
 OMP_PROC_BIND=close OMP_NUM_THREADS = 4 ./Project1 < mseq-big13-example.dat
 
-echo - e "8 thread\n"
+echo - e "8 thread(s)\n"
 OMP_PROC_BIND=close OMP_NUM_THREADS = 8 ./Project1 < mseq-big13-example.dat
 
 echo -e "---------------------\n"
