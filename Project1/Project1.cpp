@@ -105,15 +105,10 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	int probNum = 0;
 	std::string alignmentHash = "";
 
-// only need to parallel the outer loop (?), since every pair must be calculated.
-// `i` should be the start index of a given worker.
-// `k` here should replaced with the sum  of `i` + num of assigned sequences.
-// since doing a parallelisation here is incorrect, k should be pre-calculated and passed as an input to this function.
-
 	#pragma omp parallel
 	{		
-		#pragma omp for schedule(static, 1) ordered
 		for (int i = 1; i < k; i++) {
+			#pragma omp for schedule(static, 1) ordered
 			for (int j = 0; j < i; j++) {
 				std::string gene1 = genes[i];
 				std::string gene2 = genes[j];
@@ -156,9 +151,9 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
 
 				// This is where the hashes are combined and final hash calculated (?).
-				// hashes must be collected and combined in order.
+				// Hashes must be collected and combined in order.
 
-				#pragma omp ordered
+				/*#pragma omp ordered*/
 				alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
 
 				//// Uncomment for testing purposes
