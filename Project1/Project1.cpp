@@ -111,14 +111,12 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 // since doing a parallelisation here is incorrect, k should be pre-calculated and passed as an input to this function.
 
 	#pragma omp parallel
-	{
-		std::string threadHash = "";
-		
-		for (int i = 0; i < k; i++) {
-			#pragma omp for schedule(static) ordered
-			for (int j = i + 1; j < k; j++) {
-				std::string gene1 = genes[j];
-				std::string gene2 = genes[i];
+	{		
+		#pragma omp for schedule(static, 1) ordered
+		for (int i = 1; i < k; i++) {
+			for (int j = 0; j < i; j++) {
+				std::string gene1 = genes[i];
+				std::string gene2 = genes[j];
 				int m = gene1.length(); // length of gene1
 				int n = gene2.length(); // length of gene2
 				int l = m + n;
@@ -159,7 +157,6 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 
 				// This is where the hashes are combined and final hash calculated (?).
 				// hashes must be collected and combined in order.
-				/*alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));*/
 
 				#pragma omp ordered
 				alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
@@ -170,7 +167,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				//std::cout << align2 << std::endl;
 				//std::cout << std::endl;
 
-                #pragma omp ordered
+                /*#pragma omp ordered*/
 				probNum++;
 			}
 		}
@@ -182,7 +179,6 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 // return the minimum penalty and put the aligned sequences in xans and yans
 int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans, int* yans)
 {
-
 	int i, j; // intialising variables
 
 	int m = x.length(); // length of gene1
@@ -195,16 +191,19 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 	memset(dp[0], 0, size);
 
 	// intialising the table
+	#pragma omp parallel for
 	for (i = 0; i <= m; i++)
 	{
 		dp[i][0] = i * pgap;
 	}
+	#pragma omp parallel for
 	for (i = 0; i <= n; i++)
 	{
 		dp[0][i] = i * pgap;
 	}
 
 	// calcuting the minimum penalty
+	#pragma omp parallel for collapse(2)
 	for (i = 1; i <= m; i++)
 	{
 		for (j = 1; j <= n; j++)

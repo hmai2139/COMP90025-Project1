@@ -4,7 +4,7 @@
 #SBATCH --partition=physical
 #SBATCH --time=0:30:00
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=24
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=32G
 #SBATCH --job-name=parallel
