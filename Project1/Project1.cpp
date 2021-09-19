@@ -36,10 +36,10 @@ int main(int argc, char** argv) {
 	std::cin >> k;
 	std::string genes[k];
 	
-	// Each thread should read all sequences, but only do an equally divided number of pairs.
-	// If a given thread does not read all sequences then the result will be incorrect, as below.
+	#pragma omp parallel for schedule(static, 1) ordered
 	for (int i = 0; i < k; i++)
-	{
+	{	
+	#pragma omp ordered
 		std::cin >> genes[i];
 	}
 	int numPairs = k * (k - 1) / 2;
@@ -221,7 +221,6 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 	int xpos = l;
 	int ypos = l;
 
-	#pragma omp parallel 
 	while (!(i == 0 || j == 0))
 	{
 		if (x[i - 1] == y[j - 1])
@@ -249,13 +248,11 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 			j--;
 		}
 	}
-	#pragma omp parallel 
 	while (xpos > 0)
 	{
 		if (i > 0) xans[xpos--] = (int)x[--i];
 		else xans[xpos--] = (int)'_';
 	}
-	#pragma omp parallel 
 	while (ypos > 0)
 	{
 		if (j > 0) yans[ypos--] = (int)y[--j];
