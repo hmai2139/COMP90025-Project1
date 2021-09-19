@@ -1,0 +1,2 @@
+/var/spool/slurm/job29325332/slurm_script: line 15: syntax error near unexpected token `OMP_PLACES=cores'
+/var/spool/slurm/job29325332/slurm_script: line 15: `for ((n = 0; n < 10; n++)); OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=16 cat mseq-big13-example.dat | ./Project1; done '
