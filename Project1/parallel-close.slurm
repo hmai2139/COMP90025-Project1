@@ -15,18 +15,18 @@ g++ -fopenmp -lnuma -Wall -O3 -o Project1 Project1.cpp
 echo -e "OMP_PROC_BIND=close\n"
 
 echo - e "1 thread(s)\n"
-OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=1 ./Project1 < mseq-big13-example.dat
+OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=1 cat mseq-big13-example.dat | ./Project1
 
 echo - e "2 thread(s)\n"
-OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=2 ./Project1 < mseq-big13-example.dat
+OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=2 cat mseq-big13-example.dat | ./Project1
 
 echo - e "4 thread(s)\n"
-OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=4 ./Project1 < mseq-big13-example.dat
+OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=4 cat mseq-big13-example.dat | ./Project1
 
 echo - e "8 thread(s)\n"
-OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=8 ./Project1 < mseq-big13-example.dat
+OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=8 cat mseq-big13-example.dat | ./Project1
 
 echo - e "16 thread(s)\n"
-OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=16 ./Project1 < mseq-big13-example.dat
+OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=16 cat mseq-big13-example.dat | ./Project1
 
 echo -e "---------------------\n"

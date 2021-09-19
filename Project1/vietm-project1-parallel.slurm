@@ -11,4 +11,4 @@
 
 module load gcc/8.3.0
 g++ -fopenmp -lnuma -Wall -O3 -o Project1 Project1.cpp
-./Project1 < mseq-big13-example.dat
+cat mseq-big13-example.dat | ./Project1
