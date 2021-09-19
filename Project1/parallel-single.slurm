@@ -2,7 +2,7 @@
 #SBATCH --error=err-%j.err
 #SBATCH --output=parallel%j.out
 #SBATCH --partition=physical
-#SBATCH --time=5:00:00
+#SBATCH --time=0:30:00
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=24
 #SBATCH --ntasks-per-node=1
@@ -11,7 +11,7 @@
 
 module load gcc/8.3.0
 g++ -fopenmp -lnuma -Wall -O3 -o Project1 Project1.cpp
-
-for ((n = 0; n < 10; n++)); do OMP_PLACES=cores OMP_PROC_BIND=close OMP_NUM_THREADS=16 cat mseq-big13-example.dat | ./Project1; done 
-
-
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+export OMP_NUM_THREADS=16
+cat mseq-big13-example.dat | ./Project1
