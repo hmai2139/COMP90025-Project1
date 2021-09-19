@@ -102,14 +102,16 @@ int** new2d(int width, int height)
 std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	int* penalties)
 {
-	int probNum = 0;
 	std::string alignmentHash = "";
+	int numPairs = k * (k - 1) / 2;
+	std::string hashes[numPairs];
 
-	#pragma omp parallel
+	#pragma omp parallel shared(hashes)
 	{	
 		for (int i = 1; i < k; i++) {
-			#pragma omp for schedule(static, 1) ordered
+			#pragma omp for schedule(static, 1) nowait
 			for (int j = 0; j < i; j++) {
+				/*#pragma omp ordered*/
 				std::string gene1 = genes[i];
 				std::string gene2 = genes[j];
 				int m = gene1.length(); // length of gene1
@@ -117,8 +119,8 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				int l = m + n;
 				int xans[l + 1], yans[l + 1];
 
-				#pragma omp ordered
-				penalties[probNum] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
+				/*#pragma omp ordered*/
+				penalties[i + j - 1] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
 
 				// Since we have assumed the answer to be n+m long,
 				// we need to remove the extra gaps in the starting
@@ -145,27 +147,24 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 					align2.append(1, (char)yans[a]);
 				}
 
-
 				std::string align1hash = sw::sha512::calculate(align1);
 				std::string align2hash = sw::sha512::calculate(align2);
 				std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
 
-				// This is where the hashes are combined and final hash calculated (?).
-				// Hashes must be collected and combined in order.
+				hashes[i + j - 1] = problemhash;
 
-				/*#pragma omp ordered*/
-				alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
+				//std::cout << "thread #" << omp_get_thread_num() << " hash=" << problemhash << endl;
 
 				//// Uncomment for testing purposes
 				//std::cout << penalties[probNum] << std::endl;
 				//std::cout << align1 << std::endl;
 				//std::cout << align2 << std::endl;
 				//std::cout << std::endl;
-
-                /*#pragma omp ordered*/
-				probNum++;
 			}
 		}
+	}
+	for (int i = 0; i < numPairs; i++) {
+		alignmentHash = sw::sha512::calculate(alignmentHash.append(hashes[i]));
 	}
 	return alignmentHash;
 }
