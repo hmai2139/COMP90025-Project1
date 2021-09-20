@@ -145,13 +145,8 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 			std::string align2hash = sw::sha512::calculate(align2);
 			std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
 
-			hashes[i + j - 1] = problemhash;
-
-			//std::cout << "thread #" << omp_get_thread_num() << " hash=" << problemhash << endl;
+			alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
 		}
-	}
-	for (int i = 0; i < numPairs; i++) {
-		alignmentHash = sw::sha512::calculate(alignmentHash.append(hashes[i]));
 	}
 	return alignmentHash;
 }
@@ -188,39 +183,45 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 		dp[0][i] = i * pgap;
 	}
 	
-	// Diagonal traversal algorithm's reference: https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/
+	// Reference: https://www.tutorialspoint.com/zigzag-or-diagonal-traversal-of-matrix-in-cplusplus
 
-	// Starting from the leftmost bottom cell, the number of diagonal traversals = rows + cols - 1.
+	// Dimensions of a given block of cells for a given thread.
+	int blockWidth = (int) ceil((1.0 * m)/omp_get_max_threads());
+	int blockLength = (int) ceil((1.0 * n)/omp_get_max_threads());
+
+	// Equally distribute the matrix into block of cells among threads using the dimensions above.
+	int blockWidthPerThread = (int) ceil((1.0 * m)/blockWidth);
+	int blockLengthPerThread = (int) ceil((1.0 * n)/blockLength);
+
+	// Starting from the leftmost bottom cell, the number of full-length diagonal traversals = rows + cols - 1.
 	for (int traversalNum = 1; traversalNum <= (rows + cols - 1); traversalNum++)
 	{
 		// Column index of the starting cell of the current diagonal traversal.
-		int startCol = max(0, traversalNum - rows);
+		int startCol = max(1, traversalNum - blockWidthPerThread);
 
 		// Number of cells on the current diagonal traversal.
-		int cellNum = min3(traversalNum, cols - startCol, rows);
+		int cellNum = min(traversalNum, blockWidthPerThread);
 
-		#pragma omp parallel for schedule(static, 1)
-		for (int k = 0; k < cellNum; k++) {
-			int i = min(rows, traversalNum) - k - 1;
-			int j = startCol + k;
-
-			if (i == 0 || j == 0) {
-				continue;
-			}
-
-			if (gene1[i - 1] == gene2[j - 1])
-			{
-				dp[i][j] = dp[i - 1][j - 1];
-			}
-			else
-			{
-				dp[i][j] = min3(dp[i - 1][j - 1] + pxy,
-					dp[i - 1][j] + pgap,
-					dp[i][j - 1] + pgap);
+		#pragma omp parallel for
+		for (int currentCol = startCol; currentCol <= cellNum; currentCol++) {
+			int rowStartIndex = (currentCol - 1) * blockWidth + 1;
+            int rowEndIndex = min(rowStartIndex + blockWidth, rows);
+            int colStartIndex = (traversalNum - currentCol) * blockLength + 1;
+            int colEndIndedx = min(colStartIndex + blockLength, cols);
+			for (int i = rowStartIndex; i < rowEndIndex; i++) {
+				for (int j = colStartIndex; j < colEndIndedx; j++) {
+					if (gene1[i - 1] == gene2[j - 1]) {
+						dp[i][j] = dp[i - 1][j - 1];
+					}
+					else {
+						dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
+							dp[i - 1][j] + pgap),
+							dp[i][j - 1] + pgap);
+					}
+				}
 			}
 		}
 	}
-
 
 	// Reconstructing the solution.
 	int l = n + m; // maximum possible length
