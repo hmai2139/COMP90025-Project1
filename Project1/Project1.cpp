@@ -99,22 +99,20 @@ int** new2d(int width, int height) {
 
 std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	int* penalties) {
+
 	std::string alignmentHash = "";
-	int numPairs = k * (k - 1) / 2;
-	std::string hashes[numPairs];
+	int probNum = 0;
 
 	for (int i = 1; i < k; i++) {
 		for (int j = 0; j < i; j++) {
 			std::string gene1 = genes[i];
 			std::string gene2 = genes[j];
-			int m = gene1.length(); // length of gene1
-			int n = gene2.length(); // length of gene2
+			int m = gene1.length();
+			int n = gene2.length();
 			int l = m + n;
 			int xans[l + 1], yans[l + 1];
 
-			penalties[i + j - 1] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
-
-			//std::cout << "thread #" << omp_get_thread_num() << " reached here." << endl;
+			penalties[probNum] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
 
 			// Since we have assumed the answer to be n+m long,
 			// we need to remove the extra gaps in the starting
@@ -146,6 +144,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 			std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
 
 			alignmentHash = sw::sha512::calculate(alignmentHash.append(problemhash));
+			probNum++;
 		}
 	}
 	return alignmentHash;
@@ -193,11 +192,10 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 	int blockWidthPerThread = (int) ceil((1.0 * m)/blockWidth);
 	int blockLengthPerThread = (int) ceil((1.0 * n)/blockLength);
 
-	// Starting from the leftmost bottom cell, the number of full-length diagonal traversals = rows + cols - 1.
-	for (int traversalNum = 1; traversalNum <= (rows + cols - 1); traversalNum++)
+	for (int traversalNum = 1; traversalNum <= (blockWidthPerThread + blockLengthPerThread - 1); traversalNum++)
 	{
 		// Column index of the starting cell of the current diagonal traversal.
-		int startCol = max(1, traversalNum - blockWidthPerThread);
+		int startCol = max(1, traversalNum - blockLengthPerThread + 1);
 
 		// Number of cells on the current diagonal traversal.
 		int cellNum = min(traversalNum, blockWidthPerThread);
