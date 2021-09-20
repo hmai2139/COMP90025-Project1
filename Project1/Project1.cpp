@@ -106,13 +106,14 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	int numPairs = k * (k - 1) / 2;
 	std::string hashes[numPairs];
 
-	#pragma omp parallel
-	{	
+		#pragma omp for schedule(static, 1) collapse(2)
 		for (int i = 1; i < k; i++) {
-			#pragma omp for schedule(static, 1)
-			for (int j = 0; j < i; j++) {
+			for (int j = 0; j < k; j++) {
 				std::string gene1 = genes[i];
 				std::string gene2 = genes[j];
+				if (genes[i] == genes[j]) {
+					continue;
+				}
 				int m = gene1.length(); // length of gene1
 				int n = gene2.length(); // length of gene2
 				int l = m + n;
@@ -148,7 +149,6 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				std::string align1hash = sw::sha512::calculate(align1);
 				std::string align2hash = sw::sha512::calculate(align2);
 				std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
-
 				hashes[i + j - 1] = problemhash;
 
 				//std::cout << "thread #" << omp_get_thread_num() << " hash=" << problemhash << endl;
@@ -160,7 +160,6 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				//std::cout << std::endl;
 			}
 		}
-	}
 	for (int i = 0; i < numPairs; i++) {
 		alignmentHash = sw::sha512::calculate(alignmentHash.append(hashes[i]));
 	}
