@@ -2,7 +2,7 @@
 #SBATCH --error=err-%j.err
 #SBATCH --output=parallel%j.out
 #SBATCH --partition=physical
-#SBATCH --time=5:00:00
+#SBATCH --time=3:30:00
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=24
 #SBATCH --ntasks-per-node=1

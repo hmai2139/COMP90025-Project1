@@ -36,10 +36,10 @@ int main(int argc, char** argv) {
 	std::cin >> k;
 	std::string genes[k];
 	
-	#pragma omp parallel for schedule(static, 1) ordered
+	//#pragma omp parallel for schedule(static, 1) ordered
 	for (int i = 0; i < k; i++)
 	{	
-	#pragma omp ordered
+	//#pragma omp ordered
 		std::cin >> genes[i];
 	}
 	int numPairs = k * (k - 1) / 2;
