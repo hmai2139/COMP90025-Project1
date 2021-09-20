@@ -1,4 +1,5 @@
-﻿// CPP program to solve the sequence alignment
+﻿
+// CPP program to solve the sequence alignment
 // problem. Adapted from https://www.geeksforgeeks.org/sequence-alignment-problem/ 
 #include <sys/time.h>
 #include <string>
@@ -35,11 +36,11 @@ int main(int argc, char** argv) {
 	std::cin >> gapPenalty;
 	std::cin >> k;
 	std::string genes[k];
-	
-	//#pragma omp parallel for schedule(static, 1) ordered
+
+	#pragma omp parallel for schedule(static, 1) ordered
 	for (int i = 0; i < k; i++)
-	{	
-	//#pragma omp ordered
+	{
+		#pragma omp ordered
 		std::cin >> genes[i];
 	}
 	int numPairs = k * (k - 1) / 2;
@@ -81,14 +82,12 @@ int min3(int a, int b, int c) {
 // equivalent of  int *dp[width] = new int[height][width]
 // but works for width not known at compile time.
 // (Delete structure by  delete[] dp[0]; delete[] dp;)
-int** new2d(int width, int height)
-{
+int** new2d(int width, int height) {
 	int** dp = new int* [width];
 	size_t size = width;
 	size *= height;
 	int* dp0 = new int[size];
-	if (!dp || !dp0)
-	{
+	if (!dp || !dp0) {
 		std::cerr << "getMinimumPenalty: new failed" << std::endl;
 		exit(1);
 	}
@@ -100,16 +99,15 @@ int** new2d(int width, int height)
 }
 
 std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
-	int* penalties)
-{
+	int* penalties) {
 	std::string alignmentHash = "";
 	int numPairs = k * (k - 1) / 2;
 	std::string hashes[numPairs];
 
-		#pragma omp for schedule(static, 1) nowait collapse(2) 
+		#pragma omp parallel for schedule(static, 1) collapse(2)
 		for (int i = 1; i < k; i++) {
 			for (int j = 0; j < k; j++) {
-				if (i == j) {
+				if (i <= j) {
 					continue;
 				}
 				std::string gene1 = genes[i];
@@ -149,6 +147,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				std::string align1hash = sw::sha512::calculate(align1);
 				std::string align2hash = sw::sha512::calculate(align2);
 				std::string problemhash = sw::sha512::calculate(align1hash.append(align2hash));
+
 				hashes[i + j - 1] = problemhash;
 
 				//std::cout << "thread #" << omp_get_thread_num() << " hash=" << problemhash << endl;
@@ -262,3 +261,4 @@ int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans
 
 	return ret;
 }
+
