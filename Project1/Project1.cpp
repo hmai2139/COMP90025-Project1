@@ -36,10 +36,10 @@ int main(int argc, char** argv) {
 	std::cin >> k;
 	std::string genes[k];
 	
-	//#pragma omp parallel for schedule(static, 1) ordered
+	#pragma omp parallel for schedule(static, 1) ordered
 	for (int i = 0; i < k; i++)
 	{	
-	//#pragma omp ordered
+	#pragma omp ordered
 		std::cin >> genes[i];
 	}
 	int numPairs = k * (k - 1) / 2;
@@ -106,12 +106,11 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	int numPairs = k * (k - 1) / 2;
 	std::string hashes[numPairs];
 
-	#pragma omp parallel shared(hashes)
+	#pragma omp parallel
 	{	
 		for (int i = 1; i < k; i++) {
-			#pragma omp for schedule(static, 1) nowait
+			#pragma omp for schedule(static, 1)
 			for (int j = 0; j < i; j++) {
-				/*#pragma omp ordered*/
 				std::string gene1 = genes[i];
 				std::string gene2 = genes[j];
 				int m = gene1.length(); // length of gene1
@@ -119,7 +118,6 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 				int l = m + n;
 				int xans[l + 1], yans[l + 1];
 
-				/*#pragma omp ordered*/
 				penalties[i + j - 1] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
 
 				// Since we have assumed the answer to be n+m long,
