@@ -1,6 +1,26 @@
 ﻿
-// CPP program to solve the sequence alignment
-// problem. Adapted from https://www.geeksforgeeks.org/sequence-alignment-problem/ 
+/* 
+*  COMP90025 S2 2021, Project 1
+*  CPP program to solve the sequence alignment 
+*  problem. Adapted from https://www.geeksforgeeks.org/sequence-alignment-problem/.
+*  Hoang Viet Mai, 813361 <vietm@student.unimelb.edu.au>
+*/
+
+/*
+* Spartan node: spartan-bm124
+* SLURM Parameters: 
+*	#SBATCH --partition=physical			
+*	#SBATCH --time=0:20:00				
+*	#SBATCH --nodes=1			
+*	#SBATCH --cpus-per-task=24					
+*	#SBATCH --ntasks-per-node=1					
+*	#SBATCH --mem=32G
+* Compiler flags: -fopenmp -lnuma -Wall -O3
+* OpenMP enviroment variables:
+*	- OMP_PLACES=cores
+*   - OMP_PROC_BIND=close
+*	- OMP_NUM_THREADS=16
+*/
 #include <sys/time.h>
 #include <string>
 #include <cstring>
@@ -15,13 +35,13 @@ std::string getMinimumPenalties(std::string* genes, int sequenceNum, int mismatc
 int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty, int gapPenalty, int* gene1Ans, int* gene2Ans);
 
 /*
-Examples of sha512 which returns a std::string
-sw::sha512::calculate("SHA512 of std::string") // hash of a string, or
-sw::sha512::file(path) // hash of a file specified by its path, or
-sw::sha512::calculate(&data, sizeof(data)) // hash of any block of data
+* Examples of sha512 which returns a std::string
+* sw::sha512::calculate("SHA512 of std::string") // hash of a string, or
+* sw::sha512::file(path) // hash of a file specified by its path, or
+* sw::sha512::calculate(&data, sizeof(data)) // hash of any block of data
 */
 
-// Return current wallclock time, for performance measurement
+// Returns current wallclock time, for performance measurement.
 uint64_t GetTimeStamp() {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -78,9 +98,10 @@ int min3(int a, int b, int c) {
 	}
 }
 
-// Equivalent of  int *dp[width] = new int[height][width],
-// but works for width not known at compile time.
-// (Delete structure by  delete[] dp[0]; delete[] dp;)
+/* Equivalent of  int *dp[width] = new int[height][width],
+*  but works for width not known at compile time.
+*  (Delete structure by  delete[] dp[0]; delete[] dp;).
+*/
 int** new2d(int width, int height) {
 	int** dp = new int* [width];
 	size_t size = width;
@@ -154,8 +175,9 @@ std::string getMinimumPenalties(std::string* genes, int sequenceNum, int misMatc
 	return alignmentHash;
 }
 
-// Function to find out the minimum penalty.
-// Returns the minimum penalty and put the aligned sequences in xans and yans.
+/* Function to find out the minimum penalty.
+*  Returns the minimum penalty and put the aligned sequences in xans and yans.
+*/
 int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty, int gapPenalty, int* gene1Ans, int* gene2Ans)
 {
 	int i, j;
@@ -194,24 +216,30 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty,
 	int blockWidth = (int) ceil((1.0 * length1) / threads);
 	int blockLength = (int) ceil((1.0 * length2) / threads);
 
-	// Instead of (rows + cols - 1) like the source material, the number of traversal necessary is 
-	// (threads + threads - 1), because threads are moving block by block, not cell by cell.
-	for (int traversalNum = 1; traversalNum <= (2 * threads - 1); traversalNum++) {
-
+	for (int traversalNum = 1; traversalNum <= (rows + cols - 1); traversalNum++) 
+	{
 		// Column index of the starting cell of the current diagonal traversal.
 		int startCol = max(1, traversalNum - threads + 1);
 
 		// Number of cells on the current diagonal traversal.
 		int cells = min(traversalNum, threads);
 
+		#ifdef DEBUG
+		std::cout << "Traversal no." << traversalNum << " starts:" << endl;
+		std::cout << "-+-+-+-+-+-+-+" << endl;
+		std::cout << "Need to traverse " << cells << "cell(s)," << endl;
+		std::cout << "Start at column #" << startCol << "," << endl;
+		#endif
+
 		omp_set_dynamic(0);
 		omp_set_num_threads(threads);
 
+		/*#pragma omp parallel for schedule(static, 1) ordered*/ // For debug
+
+		// Each thread processes a cell on a different column along the current diagonal so no data-racing.
 		#pragma omp parallel for
 		for (int currentCol = startCol; currentCol <= cells; currentCol++) {
 
-			// Given the current column index, the block assigned to the current thread
-			// consists of cells from (rowStart, colStart) to (colStart, colEnd).
 			int rowStart = (currentCol - 1) * blockWidth + 1;
             int colStart = (traversalNum - currentCol) * blockLength + 1;
 
@@ -219,17 +247,27 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty,
 			int rowEnd = min(rowStart + blockWidth, rows);
             int colEnd = min(colStart + blockLength, cols); 
 
+			#ifdef DEBUG
+			#pragma omp ordered {
+				std::cout << "thread #" << omp_get_thread_num() << " starts at "; 
+				std::cout << "(" << rowStart << ", " colStart << ")" << " and ends at ";
+				std::cout << "(" << rowEnd << ", " colEnd << ")" << endl;
+			}
+			#endif
+
 			// Start from cell at (currentRow, currentRol), visit its northwest, north, west neighbours.
 			for (int currentRow = rowStart; currentRow < rowEnd; ++currentRow) {
-
-				/*std::cout << "traversalNum: " << traversalNum << endl;
-				std::cout << "currentCol: " << currentCol << endl;
-				std::cout << "rowStart: " << rowStart << endl;
-				std::cout << "rowEnd: " << rowEnd << endl;
-				std::cout << "colStart: " << colStart << endl;
-				std::cout << "colEnd: " << colEnd << endl;*/
-
 				for (int currentCol = colStart; currentCol < colEnd; ++currentCol) {
+
+				#ifdef DEBUG
+				#pragma omp ordered
+				{
+					std::cout << "thread #" << omp_get_thread_num() << "processing ";
+					std::cout << "(" << currentCol << "," currentCol << ")" << endl;
+					std::cout << "before: " << dp[currentRow][currentCol] << endl;
+				}
+				#endif
+
 					if (gene1[currentRow - 1] == gene2[currentCol - 1]) {
 						dp[currentRow][currentCol] = dp[currentRow - 1][currentCol - 1];
 					}
@@ -239,54 +277,62 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty,
 							dp[currentRow - 1][currentCol] + gapPenalty,
 							dp[currentRow][currentCol - 1] + gapPenalty);
 					}
+				#ifdef DEBUG
+				#pragma omp ordered
+				std::cout << "after: " << dp[currentRow][currentCol] << endl;
+				#endif
 				}
 			}
 		}
+			#ifdef DEBUG
+			std::cout << "Traversal no." << traversalNum << " ends." << endl;
+			std::cout << "-+-+-+-+-+-+-+" << endl;
+			#endif
 	}
 
 	// Reconstructing the solution.
-	int l = length2 + length1; // maximum possible length
+	int maxPossibleLength = length2 + length1;
 
 	i = length1; 
 	j = length2;
 
-	int xPos = l;
-	int yPos = l;
+	int xCoord = maxPossibleLength;
+	int yCoord = maxPossibleLength;
 
 	while (!(i == 0 || j == 0)) {
 		if (gene1[i - 1] == gene2[j - 1]) {
-			gene1Ans[xPos--] = (int) gene1[i - 1];
-			gene2Ans[yPos--] = (int) gene2[j - 1];
+			gene1Ans[xCoord--] = (int) gene1[i - 1];
+			gene2Ans[yCoord--] = (int) gene2[j - 1];
 			i--; j--;
 		}
 
 		else if (dp[i - 1][j - 1] + mismatchPenalty == dp[i][j]) {
-			gene1Ans[xPos--] = (int) gene1[i - 1];
-			gene2Ans[yPos--] = (int) gene2[j - 1];
+			gene1Ans[xCoord--] = (int) gene1[i - 1];
+			gene2Ans[yCoord--] = (int) gene2[j - 1];
 			i--; j--;
 		}
 
 		else if (dp[i - 1][j] + gapPenalty == dp[i][j]) {
-			gene1Ans[xPos--] = (int) gene1[i - 1];
-			gene2Ans[yPos--] = (int) '_';
+			gene1Ans[xCoord--] = (int) gene1[i - 1];
+			gene2Ans[yCoord--] = (int) '_';
 			i--;
 		}
 
 		else if (dp[i][j - 1] + gapPenalty == dp[i][j]) {
-			gene1Ans[xPos--] = (int) '_';
-			gene2Ans[yPos--] = (int) gene2[j - 1];
+			gene1Ans[xCoord--] = (int) '_';
+			gene2Ans[yCoord--] = (int) gene2[j - 1];
 			j--;
 		}
 	}
 
-	while (xPos > 0) {
-		if (i > 0) gene1Ans[xPos--] = (int) gene1[--i];
-		else gene1Ans[xPos--] = (int) '_';
+	while (xCoord > 0) {
+		if (i > 0) gene1Ans[xCoord--] = (int) gene1[--i];
+		else gene1Ans[xCoord--] = (int) '_';
 	}
 
-	while (yPos > 0) {
-		if (j > 0) gene2Ans[yPos--] = (int) gene2[--j];
-		else gene2Ans[yPos--] = (int) '_';
+	while (yCoord > 0) {
+		if (j > 0) gene2Ans[yCoord--] = (int) gene2[--j];
+		else gene2Ans[yCoord--] = (int) '_';
 	}
 
 	int ret = dp[length1][length2];
@@ -296,4 +342,5 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty,
 
 	return ret;
 }
+
 
