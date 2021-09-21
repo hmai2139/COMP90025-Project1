@@ -149,13 +149,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	}
 	return alignmentHash;
 }
-bool isValid(int i, int j, int m, int n)
-{
-	if (i < 0 || i >= m
-		|| j >= n || j < 0)
-		return false;
-	return true;
-}
+
 // Function to find out the minimum penalty
 // Returns the minimum penalty and put the aligned sequences in xans and yans
 int getMinimumPenalty(std::string gene1, std::string gene2, int pGene1Gene2, int pgap, int* xans, int* yans)
