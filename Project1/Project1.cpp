@@ -158,7 +158,7 @@ bool isValid(int i, int j, int m, int n)
 }
 // Function to find out the minimum penalty
 // Returns the minimum penalty and put the aligned sequences in xans and yans
-int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, int* xans, int* yans)
+int getMinimumPenalty(std::string gene1, std::string gene2, int pGene1Gene2, int pgap, int* xans, int* yans)
 {
 	int i, j;
 
@@ -185,13 +185,10 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 	// Reference: https://www.tutorialspoint.com/zigzag-or-diagonal-traversal-of-matrix-in-cplusplus
 
 	int threads = omp_get_max_threads();
+
 	// Dimensions of a given block of cells for a given thread.
 	int blockWidth = (int) ceil((1.0 * m) / threads);
 	int blockLength = (int) ceil((1.0 * n) / threads);
-
-	//// Equally distribute the matrix into block of cells among threads using the dimensions above.
-	//int blockWidthPerThread = (int) ceil((1.0 * m)/blockWidth);
-	//int blockLengthPerThread = (int) ceil((1.0 * n)/blockLength);
 
 	for (int traversalNum = 1; traversalNum <= (2 * threads - 1); traversalNum++)
 	{
@@ -203,17 +200,19 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 
 		#pragma omp parallel for
 		for (int currentCol = startCol; currentCol <= cellNum; currentCol++) {
-			int rowStartIndex = (currentCol - 1) * blockWidth + 1;
-            int rowEndIndex = min(rowStartIndex + blockWidth, rows);
-            int colStartIndex = (traversalNum - currentCol) * blockLength + 1;
-            int colEndIndedx = min(colStartIndex + blockLength, cols);
-			for (int i = rowStartIndex; i < rowEndIndex; ++i) {
-				for (int j = colStartIndex; j < colEndIndedx; ++j) {
+
+			// Given the current column index, the block assigned to the current thread are defined by the following indices.
+			int rowStart = (currentCol - 1) * blockWidth + 1;
+            int rowEnd = min(rowStart + blockWidth, rows); // Prevents out of bound.
+            int colStart = (traversalNum - currentCol) * blockLength + 1;
+            int colEnd = min(colStart + blockLength, cols); // Prevents out of bound.
+			for (int i = rowStart; i < rowEnd; ++i) {
+				for (int j = colStart; j < colEnd; ++j) {
 					if (gene1[i - 1] == gene2[j - 1]) {
 						dp[i][j] = dp[i - 1][j - 1];
 					}
 					else {
-						dp[i][j] = min(min(dp[i - 1][j - 1] + pxy,
+						dp[i][j] = min(min(dp[i - 1][j - 1] + pGene1Gene2,
 							dp[i - 1][j] + pgap),
 							dp[i][j - 1] + pgap);
 					}
@@ -239,7 +238,7 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 			yans[ypos--] = (int)gene2[j - 1];
 			i--; j--;
 		}
-		else if (dp[i - 1][j - 1] + pxy == dp[i][j])
+		else if (dp[i - 1][j - 1] + pGene1Gene2 == dp[i][j])
 		{
 			xans[xpos--] = (int)gene1[i - 1];
 			yans[ypos--] = (int)gene2[j - 1];
