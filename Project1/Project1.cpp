@@ -1,9 +1,9 @@
 ﻿
 /* 
-*  COMP90025 S2 2021, Project 1
-*  CPP program to solve the sequence alignment 
-*  problem. Adapted from https://www.geeksforgeeks.org/sequence-alignment-problem/.
-*  Hoang Viet Mai, 813361 <vietm@student.unimelb.edu.au>
+*  COMP90025 S2 2021, Project 1.
+*  CPP program to solve the sequence alignment problem. 
+*  Adapted from https://www.geeksforgeeks.org/sequence-alignment-problem/.
+*  Hoang Viet Mai, 813361 <vietm@student.unimelb.edu.au>.
 */
 
 /*
