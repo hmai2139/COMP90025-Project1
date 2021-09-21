@@ -103,8 +103,8 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	std::string alignmentHash = "";
 	int probNum = 0;
 
-	for (int i = 1; i < k; i++) {
-		for (int j = 0; j < i; j++) {
+	for (int i = 1; i < k; ++i) {
+		for (int j = 0; j < i; ++j) {
 			std::string gene1 = genes[i];
 			std::string gene2 = genes[j];
 			int m = gene1.length();
@@ -120,7 +120,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 			// xans, yans are useful
 			int id = 1;
 			int a;
-			for (a = l; a >= 1; a--)
+			for (a = l; a >= 1; --a)
 			{
 				if ((char)yans[a] == '_' && (char)xans[a] == '_')
 				{
@@ -134,7 +134,7 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 			{
 				align1.append(1, (char)xans[a]);
 			}
-			for (a = id; a <= l; a++)
+			for (a = id; a <= l; ++a)
 			{
 				align2.append(1, (char)yans[a]);
 			}
@@ -175,30 +175,31 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
 	memset(dp[0], 0, size);
 
 	// Intialising the table
-	for (i = 0; i <= m; i++) {
+	for (i = 0; i <= m; ++i) {
 		dp[i][0] = i * pgap;
 	}
-	for (i = 0; i <= n; i++) {
+	for (i = 0; i <= n; ++i) {
 		dp[0][i] = i * pgap;
 	}
 	
 	// Reference: https://www.tutorialspoint.com/zigzag-or-diagonal-traversal-of-matrix-in-cplusplus
 
+	int threads = omp_get_max_threads();
 	// Dimensions of a given block of cells for a given thread.
-	int blockWidth = (int) ceil((1.0 * m)/omp_get_max_threads());
-	int blockLength = (int) ceil((1.0 * n)/omp_get_max_threads());
+	int blockWidth = (int) ceil((1.0 * m) / threads);
+	int blockLength = (int) ceil((1.0 * n) / threads);
 
-	// Equally distribute the matrix into block of cells among threads using the dimensions above.
-	int blockWidthPerThread = (int) ceil((1.0 * m)/blockWidth);
-	int blockLengthPerThread = (int) ceil((1.0 * n)/blockLength);
+	//// Equally distribute the matrix into block of cells among threads using the dimensions above.
+	//int blockWidthPerThread = (int) ceil((1.0 * m)/blockWidth);
+	//int blockLengthPerThread = (int) ceil((1.0 * n)/blockLength);
 
-	for (int traversalNum = 1; traversalNum <= (blockWidthPerThread + blockLengthPerThread - 1); traversalNum++)
+	for (int traversalNum = 1; traversalNum <= (2 * threads - 1); traversalNum++)
 	{
 		// Column index of the starting cell of the current diagonal traversal.
-		int startCol = max(1, traversalNum - blockLengthPerThread + 1);
+		int startCol = max(1, traversalNum - threads + 1);
 
 		// Number of cells on the current diagonal traversal.
-		int cellNum = min(traversalNum, blockWidthPerThread);
+		int cellNum = min(traversalNum, threads);
 
 		#pragma omp parallel for
 		for (int currentCol = startCol; currentCol <= cellNum; currentCol++) {
@@ -206,8 +207,8 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pxy, int pgap, i
             int rowEndIndex = min(rowStartIndex + blockWidth, rows);
             int colStartIndex = (traversalNum - currentCol) * blockLength + 1;
             int colEndIndedx = min(colStartIndex + blockLength, cols);
-			for (int i = rowStartIndex; i < rowEndIndex; i++) {
-				for (int j = colStartIndex; j < colEndIndedx; j++) {
+			for (int i = rowStartIndex; i < rowEndIndex; ++i) {
+				for (int j = colStartIndex; j < colEndIndedx; ++j) {
 					if (gene1[i - 1] == gene2[j - 1]) {
 						dp[i][j] = dp[i - 1][j - 1];
 					}
