@@ -7,13 +7,12 @@
 #include <iostream>
 #include "sha512.hh"
 #include <omp.h>
-#include <numa.h>
 #include <cmath>
 
 using namespace std;
 
-std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap, int* penalties);
-int getMinimumPenalty(std::string x, std::string y, int pxy, int pgap, int* xans, int* yans);
+std::string getMinimumPenalties(std::string* genes, int sequenceNum, int mismatchPenalty, int gapPenalty, int* penalties);
+int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty, int gapPenalty, int* gene1Ans, int* gene2Ans);
 
 /*
 Examples of sha512 which returns a std::string
@@ -32,37 +31,38 @@ uint64_t GetTimeStamp() {
 int main(int argc, char** argv) {
 	int misMatchPenalty;
 	int gapPenalty;
-	int k;
+	int sequenceNum;
 	std::cin >> misMatchPenalty;
 	std::cin >> gapPenalty;
-	std::cin >> k;
-	std::string genes[k];
+	std::cin >> sequenceNum;
+	std::string genes[sequenceNum];
 
-	for (int i = 0; i < k; i++)
+	for (int i = 0; i < sequenceNum; i++)
 	{
 		std::cin >> genes[i];
 	}
-	int numPairs = k * (k - 1) / 2;
+	int numPairs = sequenceNum * (sequenceNum - 1) / 2;
 
 	int penalties[numPairs];
 
-	uint64_t start = GetTimeStamp();
+	uint64_t startTime = GetTimeStamp();
 
-	// return all the penalties and the hash of all allignments
+	// Return all the penalties and the hash of all alignments.
 	std::string alignmentHash = getMinimumPenalties(genes,
-		k, misMatchPenalty, gapPenalty,
+		sequenceNum, misMatchPenalty, gapPenalty,
 		penalties);
 
-	// print the time taken to do the computation
-	printf("Time: %ld us\n", (uint64_t)(GetTimeStamp() - start));
+	// Print the time taken to do the computation.
+	printf("Time: %ld us\n", (uint64_t)(GetTimeStamp() - startTime));
 
-	// print the alginment hash
+	// Print the alignment hash.
 	std::cout << alignmentHash << std::endl;
 
 	for (int i = 0; i < numPairs; i++) {
 		std::cout << penalties[i] << " ";
 	}
 	std::cout << std::endl;
+
 	return 0;
 }
 
@@ -78,7 +78,7 @@ int min3(int a, int b, int c) {
 	}
 }
 
-// equivalent of  int *dp[width] = new int[height][width]
+// Equivalent of  int *dp[width] = new int[height][width],
 // but works for width not known at compile time.
 // (Delete structure by  delete[] dp[0]; delete[] dp;)
 int** new2d(int width, int height) {
@@ -86,43 +86,47 @@ int** new2d(int width, int height) {
 	size_t size = width;
 	size *= height;
 	int* dp0 = new int[size];
+
 	if (!dp || !dp0) {
 		std::cerr << "getMinimumPenalty: new failed" << std::endl;
 		exit(1);
 	}
+
 	dp[0] = dp0;
+
 	for (int i = 1; i < width; i++)
 		dp[i] = dp[i - 1] + height;
 
 	return dp;
 }
 
-std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
+std::string getMinimumPenalties(std::string* genes, int sequenceNum, int misMatchPenalty, int gapPenalty,
 	int* penalties) {
-
 	std::string alignmentHash = "";
 	int probNum = 0;
 
-	for (int i = 1; i < k; ++i) {
+	for (int i = 1; i < sequenceNum; ++i) {
 		for (int j = 0; j < i; ++j) {
 			std::string gene1 = genes[i];
 			std::string gene2 = genes[j];
-			int m = gene1.length();
-			int n = gene2.length();
-			int l = m + n;
-			int xans[l + 1], yans[l + 1];
 
-			penalties[probNum] = getMinimumPenalty(gene1, gene2, pxy, pgap, xans, yans);
+			int length1 = gene1.length();
+			int length2 = gene2.length();
+			int totalLength = length1 + length2;
+
+			int gene1Ans[totalLength + 1], gene2Ans[totalLength + 1];
+
+			penalties[probNum] = getMinimumPenalty(gene1, gene2, misMatchPenalty, gapPenalty, gene1Ans, gene2Ans);
 
 			// Since we have assumed the answer to be n+m long,
 			// we need to remove the extra gaps in the starting
 			// id represents the index from which the arrays
-			// xans, yans are useful
+			// xans, yans are useful.
 			int id = 1;
 			int a;
-			for (a = l; a >= 1; --a)
+			for (a = totalLength; a >= 1; --a)
 			{
-				if ((char)yans[a] == '_' && (char)xans[a] == '_')
+				if ((char) gene1Ans[a] == '_' && (char) gene2Ans[a] == '_')
 				{
 					id = a + 1;
 					break;
@@ -130,13 +134,13 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 			}
 			std::string align1 = "";
 			std::string align2 = "";
-			for (a = id; a <= l; a++)
+			for (a = id; a <= totalLength; a++)
 			{
-				align1.append(1, (char)xans[a]);
+				align1.append(1, (char) gene1Ans[a]);
 			}
-			for (a = id; a <= l; ++a)
+			for (a = id; a <= totalLength; ++a)
 			{
-				align2.append(1, (char)yans[a]);
+				align2.append(1, (char) gene2Ans[a]);
 			}
 
 			std::string align1hash = sw::sha512::calculate(align1);
@@ -150,65 +154,90 @@ std::string getMinimumPenalties(std::string* genes, int k, int pxy, int pgap,
 	return alignmentHash;
 }
 
-// Function to find out the minimum penalty
-// Returns the minimum penalty and put the aligned sequences in xans and yans
-int getMinimumPenalty(std::string gene1, std::string gene2, int pGene1Gene2, int pgap, int* xans, int* yans)
+// Function to find out the minimum penalty.
+// Returns the minimum penalty and put the aligned sequences in xans and yans.
+int getMinimumPenalty(std::string gene1, std::string gene2, int mismatchPenalty, int gapPenalty, int* gene1Ans, int* gene2Ans)
 {
 	int i, j;
 
-	int m = gene1.length();
-	int n = gene2.length();
+	int length1 = gene1.length();
+	int length2 = gene2.length();
 
-	int rows = m + 1;
-	int cols = n + 1;
+	int rows = length1 + 1;
+	int cols = length2 + 1;
 
-	// Table for storing optimal substructure answers
-	int** dp = new2d(m + 1, n + 1);
-	size_t size = m + 1;
-	size *= n + 1;
+	// Table for storing optimal substructure answers.
+	int** dp = new2d(length1 + 1, length2 + 1);
+	size_t size = length1 + 1;
+	size *= length2 + 1;
 	memset(dp[0], 0, size);
 
-	// Intialising the table
-	for (i = 0; i <= m; ++i) {
-		dp[i][0] = i * pgap;
+	// Intialising the table.
+	for (i = 0; i <= length1; ++i) {
+		dp[i][0] = i * gapPenalty;
 	}
-	for (i = 0; i <= n; ++i) {
-		dp[0][i] = i * pgap;
+	for (i = 0; i <= length2; ++i) {
+		dp[0][i] = i * gapPenalty;
 	}
 	
-	// Reference: https://www.tutorialspoint.com/zigzag-or-diagonal-traversal-of-matrix-in-cplusplus
+	/* References for my parallelisation approach: 
+	   1. Sequential algorithm, adapted from: 
+	        - https://www.tutorialspoint.com/zigzag-or-diagonal-traversal-of-matrix-in-cplusplus.
+	   2. Parallel algorithm, idea and approach from: 
+			- https://etd.ohiolink.edu/apexprod/rws_etd/send_file/send?accession=kent1429528937&disposition=inline.
+			- https://cse.buffalo.edu/~vipin/book_Chapters/2006/2006_2.pdf.
+	*/
 
 	int threads = omp_get_max_threads();
 
-	// Dimensions of a given block of cells for a given thread.
-	int blockWidth = (int) ceil((1.0 * m) / threads);
-	int blockLength = (int) ceil((1.0 * n) / threads);
+	// Dimensions in (matrix) cells of a given block of cells for a given thread, min = 1.
+	int blockWidth = (int) ceil((1.0 * length1) / threads);
+	int blockLength = (int) ceil((1.0 * length2) / threads);
 
-	for (int traversalNum = 1; traversalNum <= (2 * threads - 1); traversalNum++)
-	{
+	// Instead of (rows + cols - 1) like the source material, the number of traversal necessary is 
+	// (threads + threads - 1), because threads are moving block by block, not cell by cell.
+	for (int traversalNum = 1; traversalNum <= (2 * threads - 1); traversalNum++) {
+
 		// Column index of the starting cell of the current diagonal traversal.
 		int startCol = max(1, traversalNum - threads + 1);
 
 		// Number of cells on the current diagonal traversal.
-		int cellNum = min(traversalNum, threads);
+		int cells = min(traversalNum, threads);
+
+		omp_set_dynamic(0);
+		omp_set_num_threads(threads);
 
 		#pragma omp parallel for
-		for (int currentCol = startCol; currentCol <= cellNum; currentCol++) {
+		for (int currentCol = startCol; currentCol <= cells; currentCol++) {
 
-			// Given the current column index, the block assigned to the current thread are defined by the following indices.
+			// Given the current column index, the block assigned to the current thread
+			// consists of cells from (rowStart, colStart) to (colStart, colEnd).
 			int rowStart = (currentCol - 1) * blockWidth + 1;
-            int rowEnd = min(rowStart + blockWidth, rows); // Prevents out of bound.
             int colStart = (traversalNum - currentCol) * blockLength + 1;
-            int colEnd = min(colStart + blockLength, cols); // Prevents out of bound.
-			for (int i = rowStart; i < rowEnd; ++i) {
-				for (int j = colStart; j < colEnd; ++j) {
-					if (gene1[i - 1] == gene2[j - 1]) {
-						dp[i][j] = dp[i - 1][j - 1];
+
+			// Prevents out-of-bound traversal.
+			int rowEnd = min(rowStart + blockWidth, rows);
+            int colEnd = min(colStart + blockLength, cols); 
+
+			// Start from cell at (currentRow, currentRol), visit its northwest, north, west neighbours.
+			for (int currentRow = rowStart; currentRow < rowEnd; ++currentRow) {
+
+				/*std::cout << "traversalNum: " << traversalNum << endl;
+				std::cout << "currentCol: " << currentCol << endl;
+				std::cout << "rowStart: " << rowStart << endl;
+				std::cout << "rowEnd: " << rowEnd << endl;
+				std::cout << "colStart: " << colStart << endl;
+				std::cout << "colEnd: " << colEnd << endl;*/
+
+				for (int currentCol = colStart; currentCol < colEnd; ++currentCol) {
+					if (gene1[currentRow - 1] == gene2[currentCol - 1]) {
+						dp[currentRow][currentCol] = dp[currentRow - 1][currentCol - 1];
 					}
 					else {
-						dp[i][j] = min(min(dp[i - 1][j - 1] + pGene1Gene2,
-							dp[i - 1][j] + pgap),
-							dp[i][j - 1] + pgap);
+						dp[currentRow][currentCol] = min3(
+							dp[currentRow - 1][currentCol - 1] + mismatchPenalty,
+							dp[currentRow - 1][currentCol] + gapPenalty,
+							dp[currentRow][currentCol - 1] + gapPenalty);
 					}
 				}
 			}
@@ -216,53 +245,51 @@ int getMinimumPenalty(std::string gene1, std::string gene2, int pGene1Gene2, int
 	}
 
 	// Reconstructing the solution.
-	int l = n + m; // maximum possible length
+	int l = length2 + length1; // maximum possible length
 
-	i = m; 
-	j = n;
+	i = length1; 
+	j = length2;
 
-	int xpos = l;
-	int ypos = l;
+	int xPos = l;
+	int yPos = l;
 
-	while (!(i == 0 || j == 0))
-	{
-		if (gene1[i - 1] == gene2[j - 1])
-		{
-			xans[xpos--] = (int)gene1[i - 1];
-			yans[ypos--] = (int)gene2[j - 1];
+	while (!(i == 0 || j == 0)) {
+		if (gene1[i - 1] == gene2[j - 1]) {
+			gene1Ans[xPos--] = (int) gene1[i - 1];
+			gene2Ans[yPos--] = (int) gene2[j - 1];
 			i--; j--;
 		}
-		else if (dp[i - 1][j - 1] + pGene1Gene2 == dp[i][j])
-		{
-			xans[xpos--] = (int)gene1[i - 1];
-			yans[ypos--] = (int)gene2[j - 1];
+
+		else if (dp[i - 1][j - 1] + mismatchPenalty == dp[i][j]) {
+			gene1Ans[xPos--] = (int) gene1[i - 1];
+			gene2Ans[yPos--] = (int) gene2[j - 1];
 			i--; j--;
 		}
-		else if (dp[i - 1][j] + pgap == dp[i][j])
-		{
-			xans[xpos--] = (int)gene1[i - 1];
-			yans[ypos--] = (int)'_';
+
+		else if (dp[i - 1][j] + gapPenalty == dp[i][j]) {
+			gene1Ans[xPos--] = (int) gene1[i - 1];
+			gene2Ans[yPos--] = (int) '_';
 			i--;
 		}
-		else if (dp[i][j - 1] + pgap == dp[i][j])
-		{
-			xans[xpos--] = (int)'_';
-			yans[ypos--] = (int)gene2[j - 1];
+
+		else if (dp[i][j - 1] + gapPenalty == dp[i][j]) {
+			gene1Ans[xPos--] = (int) '_';
+			gene2Ans[yPos--] = (int) gene2[j - 1];
 			j--;
 		}
 	}
-	while (xpos > 0)
-	{
-		if (i > 0) xans[xpos--] = (int)gene1[--i];
-		else xans[xpos--] = (int)'_';
-	}
-	while (ypos > 0)
-	{
-		if (j > 0) yans[ypos--] = (int)gene2[--j];
-		else yans[ypos--] = (int)'_';
+
+	while (xPos > 0) {
+		if (i > 0) gene1Ans[xPos--] = (int) gene1[--i];
+		else gene1Ans[xPos--] = (int) '_';
 	}
 
-	int ret = dp[m][n];
+	while (yPos > 0) {
+		if (j > 0) gene2Ans[yPos--] = (int) gene2[--j];
+		else gene2Ans[yPos--] = (int) '_';
+	}
+
+	int ret = dp[length1][length2];
 
 	delete[] dp[0];
 	delete[] dp;
